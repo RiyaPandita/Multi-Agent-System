@@ -1,129 +1,102 @@
-# Multi-Agent-System
+# Multi-Agent Music Store Assistant
 
-This project is a **multi-agent system** built using Python and Jupyter Notebook.  
-It demonstrates how multiple AI agents can collaborate to solve tasks, leveraging APIs and external tools.
+This repository demonstrates a multi-agent system for a digital music store using LangChain, LangGraph, and related libraries. It features agents for music catalog queries, invoice retrieval, customer verification, and long-term memory management.
 
----
+## Agent Architecture
 
-## 🚀 Features
-- Multi-agent coordination logic
-- Integration with external APIs (Google, etc.)
-- Memory and feedback handling
-- Configurable via `.env` file
-- Modular and extensible design
+The system is built around several specialized agents, each responsible for a distinct domain:
 
----
+### 1. Music Catalog Sub-Agent
 
-## 📂 Project Structure
-```
-multi_agent.ipynb     # Main notebook
-.env.example          # Environment variables template
-README.md             # Project documentation
-```
+- **Purpose:** Handles queries about songs, albums, artists, and playlists in the music catalog.
+- **Tools:**  
+	- `get_albums_by_artist`: Fetches albums by artist name.
+	- `get_tracks_by_artist`: Fetches tracks by artist name.
+	- `get_songs_by_genre`: Fetches songs by genre.
+	- `check_for_songs`: Checks if a song exists by title.
+- **Flow:** Receives user queries, invokes relevant tools, and returns music-related information.
 
----
+### 2. Invoice Information Sub-Agent
 
-## ⚙️ Setup Instructions
+- **Purpose:** Handles queries about customer invoices and purchases.
+- **Tools:**  
+	- `get_invoices_by_customer_sorted_by_date`: Retrieves invoices for a customer, sorted by date.
+	- `get_invoices_sorted_by_unit_price`: Retrieves invoices sorted by unit price.
+	- `get_employee_by_invoice_and_customer`: Retrieves employee info associated with an invoice.
+- **Flow:** Processes invoice-related queries and returns purchase information.
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/your-username/multi-agent-system.git
-cd multi-agent-system
-```
+### 3. Supervisor Agent
 
-### 2. Create and Activate a Virtual Environment
-```bash
-python -m venv venv
-source venv/bin/activate   # On Linux/Mac
-venv\Scripts\activate      # On Windows
-```
+- **Purpose:** Routes user queries to the appropriate sub-agent (music or invoice) based on query content.
+- **Flow:** Analyzes message history and decides which sub-agent should handle the next step.
 
-### 3. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+### 4. Verification Node
 
-### 4. Configure Environment Variables
-Create a `.env` file in the root directory (or copy from `.env.example`):
+- **Purpose:** Verifies customer identity using customer ID, email, or phone number.
+- **Flow:** Extracts identifier from user input, matches it against the database, and confirms account verification.
 
-```env
-GOOGLE_API_KEY=your_google_api_key_here
-URL=your_service_url_here
-USER=your_username_here
-USER_ID=your_user_id_here
-FEEDBACK_KEY=your_feedback_key_here
-```
+### 5. Memory Nodes
 
-> ⚠️ **Never commit your `.env` file** to GitHub. Use `.gitignore` to keep it safe.
+- **Load Memory:** Loads user preferences (e.g., music interests) from long-term memory.
+- **Create Memory:** Updates or creates a user profile based on conversation history and stores music preferences.
 
----
+### 6. Human Input Node
 
-## ▶️ Usage
-Run the notebook:
+- **Purpose:** Handles interruptions when additional user input is required (e.g., missing customer ID).
 
-```bash
-jupyter notebook multi_agent.ipynb
-```
+## Graph Structure
 
----
+The agents and nodes are composed into directed graphs using LangGraph:
 
-## 📌 Notes
-- Requires **Python 3.8+**
-- Make sure to set valid API keys in `.env` before running
-- Extend the system by adding new agents or modifying memory structures
+- **Music Catalog Sub-Agent Graph:** Handles music queries and tool invocations.
+- **Invoice Information Sub-Agent Graph:** Handles invoice queries and tool invocations.
+- **Supervisor Graph:** Orchestrates routing between sub-agents.
+- **Multi-Agent Verification Graph:** Adds customer verification and memory management to the workflow.
+- **Final Multi-Agent Graph:** Integrates verification, memory loading, supervisor routing, and memory updating.
 
----
+## Configuration
 
+- **API Keys:**  
+	- Uses Google Generative AI (`GOOGLE_API_KEY`) loaded from `.env`.
+- **Database:**  
+	- Loads the Chinook SQLite database into memory for music and invoice data.
+- **Memory Store:**  
+	- Uses `InMemoryStore` for long-term user profile storage.
+- **Checkpointer:**  
+	- Uses `MemorySaver` for graph checkpointing.
 
----
+## How to Run
 
-# .env.example
+1. **Install Dependencies:**  
+	 - Python 3.8+
+	 - `langchain`, `langgraph`, `langchain_google_genai`, `sqlalchemy`, `sqlite3`, `requests`, `pydantic`, `typing_extensions`, `openevals`, `langsmith`
 
-# API Keys
-GOOGLE_API_KEY=your_google_api_key_here
+2. **Set Up API Keys:**  
+	 - Add your Google Generative AI API key to `.env` as `GOOGLE_API_KEY`.
 
-# Service Config
-URL=your_service_url_here
-USER=your_username_here
-USER_ID=your_user_id_here
+3. **Run Notebook:**  
+	 - Open `multi_agent.ipynb` in VS Code or Jupyter.
+	 - Execute cells to initialize agents, run test queries, and view results.
 
-# Custom Keys
-FEEDBACK_KEY=your_feedback_key_here
+## Evaluation
 
+- **Final Response Evaluation:**  
+	- Uses LangSmith datasets and LLM-as-a-judge evaluators to assess agent responses.
+- **Single Step Evaluation:**  
+	- Tests supervisor routing decisions.
+- **Trajectory Evaluation:**  
+	- Tracks and evaluates the sequence of agent/node executions.
 
----
+## Customization
 
-# .gitignore
+- **Add New Tools:**  
+	- Define new functions and decorate with `@tool`.
+- **Modify Prompts:**  
+	- Update agent/system prompts for different behaviors.
+- **Change Routing Logic:**  
+	- Adjust supervisor logic to support new sub-agents or workflows.
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.so
-*.egg-info/
-.eggs/
-*.log
+## File Overview
 
-# Virtual environment
-venv/
-.envrc
-.env
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb_save
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE files
-.vscode/
-.idea/
-
-# Data / outputs
-*.csv
-*.tsv
-*.json
-*.sqlite
+- `multi_agent.ipynb`: Main notebook with all agent definitions, graph construction, and evaluation logic.
+- `.env`: Stores API keys.
